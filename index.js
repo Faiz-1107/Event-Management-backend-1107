@@ -16,7 +16,7 @@ app.use(cors("*"));
 app.use(express.json());
 app.use(bodyParser.json());
 
-// ------------------- SIGNUP -------------------
+// SIGNUP endpoint
 app.post("/signup", async (req, res) => {
   try {
     const { name, email, mobile, password, role } = req.body;
@@ -25,7 +25,7 @@ app.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Check if email already exists
+    // Checks if email already exists
     db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
       if (err) {
         console.error("DB error (check email):", err);
@@ -35,10 +35,10 @@ app.post("/signup", async (req, res) => {
         return res.status(400).json({ error: "Email already exists" });
       }
 
-      // Hash password
+      // Hashing password by using bcrypt
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert into DB
+      // Inserts new user into DB after validating and hashing the password
       db.query(
         "INSERT INTO users (name, email, mobile, password, role) VALUES (?, ?, ?, ?, ?)",
         [name, email, mobile, hashedPassword, role],
@@ -60,7 +60,7 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-// ------------------- LOGIN -------------------
+//  LOGIN endpoint
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -68,7 +68,7 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
-  // Check if user exists
+  // Checks if user already exists
   db.query("SELECT * FROM users WHERE email = ?", [email], async (err, result) => {
     if (err) return res.status(500).json({ error: "DB error" });
     if (result.length === 0) {
@@ -77,17 +77,17 @@ app.post("/login", (req, res) => {
 
     const user = result[0];
 
-    // Compare password
+    // Compares password with the hashed password stored in DB
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Generate JWT token
+    // Generates JWT(JSON web token)
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "mysecretkey",  // ✅ safer way
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET || "mysecretkey",  // creates a token containing the user's ID and email, signed with a secret key
+      { expiresIn: "1h" } // valid for 1 hour
     );
 
     res.json({
@@ -97,15 +97,15 @@ app.post("/login", (req, res) => {
     });
   });
 });
-// ------------------- ⭐ ADMIN LOGIN -------------------
-app.post("/admin/login", (req, res) => {   // ⭐ Added for Admin Login
+// ADMIN LOGIN 
+app.post("/admin/login", (req, res) => {   
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
-  // ✅ Check if admin exists
+  // Checks if admin exists
   db.query("SELECT * FROM users WHERE email = ? AND role = 'admin'", [email], async (err, result) => {
     if (err) return res.status(500).json({ error: "DB error" });
     if (result.length === 0) {
@@ -135,9 +135,9 @@ app.post("/admin/login", (req, res) => {   // ⭐ Added for Admin Login
 
 
 
-// ------------------- EVENTS -------------------
+// EVENTS
 app.get("/events", (req, res) => {
-  const query = "SELECT * FROM events"; // ✅ assumes you have events table
+  const query = "SELECT * FROM events"; 
   db.query(query, (err, results) => {
     if (err) {
       console.error("DB error (events):", err);
@@ -147,9 +147,9 @@ app.get("/events", (req, res) => {
   });
 });
 
-// ------------------- REGISTRATION -------------------  // ⬅️ NEW SECTION
+// REGISTRATION
 
-// API route: Register user
+// To handle and store event registration data submitted by users.
 app.post("/registrations", (req, res) => {
   const { name, email, mobile, message } = req.body;
 
@@ -167,7 +167,7 @@ app.post("/registrations", (req, res) => {
   });
 });
 
-// API route: Get all registrations (optional, for admin)
+// to fetch and view all event registrations from the database.
 app.get("/registrations", (req, res) => {
   const sql = "SELECT * FROM registrations ORDER BY created_at DESC";
   db.query(sql, (err, results) => {
@@ -178,7 +178,7 @@ app.get("/registrations", (req, res) => {
   });
 });
 
-// ------------------- SERVER -------------------
+//  tells the server to listen for HTTP requests on port 8888.
 app.listen(8888, () => {
   console.log(`🚀 Server is running on port ${8888}`);
 });
