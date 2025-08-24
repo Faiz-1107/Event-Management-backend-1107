@@ -1,5 +1,3 @@
-
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs");
@@ -97,7 +95,8 @@ app.post("/login", (req, res) => {
     });
   });
 });
-// ADMIN LOGIN 
+
+// Admin logi
 app.post("/admin/login", (req, res) => {   
   const { email, password } = req.body;
 
@@ -135,7 +134,7 @@ app.post("/admin/login", (req, res) => {
 
 
 
-// EVENTS
+// DB Events
 app.get("/events", (req, res) => {
   const query = "SELECT * FROM events"; 
   db.query(query, (err, results) => {
@@ -147,7 +146,7 @@ app.get("/events", (req, res) => {
   });
 });
 
-// REGISTRATION
+// Registration
 
 // To handle and store event registration data submitted by users.
 app.post("/registrations", (req, res) => {
@@ -183,5 +182,67 @@ app.listen(8888, () => {
   console.log(`🚀 Server is running on port ${8888}`);
 });
 
+// create event 
+app.post("/events", (req, res) => {
+  const { 
+    title, 
+    date, 
+    time, 
+    total_seats, 
+    left_seats, 
+    location, 
+    tags, 
+    highlights, 
+    organizer, 
+    description, 
+    banner_image 
+  } = req.body;
+
+  if (!title || !date || !time || !total_seats || !left_seats) {
+    return res.status(400).json({ error: "Title, date, time, and seat info are required" });
+  }
+
+  const sql = `
+    INSERT INTO events 
+    (title, date, time, total_seats, left_seats, location, tags, highlights, organizer, description, banner_image) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(
+    sql,
+    [title, date, time, total_seats, left_seats, location, tags, highlights, organizer, description, banner_image],
+    (err, result) => {
+      if (err) {
+        console.error("❌ Database error (create event):", err);
+        return res.status(500).json({ error: "Database error while creating event" });
+      }
+      res.status(201).json({ success: true, message: "Event created successfully!" });
+    }
+  );
+});
+
+
+// delete event
+app.delete("/events/:id", (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "Event ID is required" });
+  }
+
+  const sql = "DELETE FROM events WHERE id = ?";
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("DB error (delete event):", err);
+      return res.status(500).json({ error: "Database error while deleting event" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Event not found" });
+    }
+
+    res.json({ success: true, message: "Event deleted successfully!" });
+  });
+});
 
 
