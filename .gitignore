@@ -1,2 +1,14 @@
+# Node modules
+node_modules/
+
+# Environment variables
 .env
-node_modules
+
+# Logs
+*.log
+
+# Optional npm cache directory
+.npm
+
+# Mac system files
+.DS_Store
