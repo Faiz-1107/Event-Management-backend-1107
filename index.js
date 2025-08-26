@@ -96,7 +96,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// Admin logi
+// Admin login
 app.post("/admin/login", (req, res) => {   
   const { email, password } = req.body;
 
